@@ -6,6 +6,7 @@ import { generateLesson } from "@/lib/openai"
 import { useLessonStore } from "@/store/lesson-store"
 import { ActivityType, Lesson } from "@/types/lesson"
 import { LessonContent } from "@/components/lesson/lesson-content"
+import { Loader2 } from "lucide-react"
 
 interface ContentEditorProps {
   lesson: Lesson
@@ -15,35 +16,38 @@ interface ContentEditorProps {
 export function ContentEditor({ lesson, onUpdate }: ContentEditorProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editedLesson, setEditedLesson] = useState<Lesson>(lesson)
-  const { updateLesson } = useLessonStore()
+  const [regeneratingSection, setRegeneratingSection] = useState<keyof Lesson | null>(null)
+  const { updateLesson, setCurrentLesson } = useLessonStore()
 
-  // Update editedLesson when lesson prop changes
   useEffect(() => {
     setEditedLesson(lesson)
   }, [lesson])
 
   const handleRegenerateSection = async (section: keyof Lesson) => {
     try {
+      setRegeneratingSection(section)
       console.log("Regenerating", `${section} section for lesson: ${lesson.title}`)
       const newContent = await generateLesson(lesson.title, `Regenerate the ${section} section for this lesson: ${lesson.title}`)
       
-      // Update the editedLesson with the new content
+   
       setEditedLesson(prev => ({
         ...prev,
         [section]: newContent[section],
       }))
       
-      // Also update the lesson store to persist changes
       updateLesson({ [section]: newContent[section] })
       
       console.log("Success", `${section} regenerated successfully`)
     } catch (error) {
       console.error("Error", `Failed to regenerate ${section}:`, error)
+    } finally {
+      setRegeneratingSection(null)
     }
   }
 
   const handleSave = () => {
     onUpdate(editedLesson)
+    setCurrentLesson(editedLesson)
     setIsEditing(false)
     console.log("Success", "Changes saved successfully")
   }
@@ -98,8 +102,16 @@ export function ContentEditor({ lesson, onUpdate }: ContentEditorProps) {
                 variant="ghost"
                 size="sm"
                 onClick={() => handleRegenerateSection("title")}
+                disabled={regeneratingSection === "title"}
               >
-                Regenerate
+                {regeneratingSection === "title" ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Regenerating...
+                  </>
+                ) : (
+                  "Regenerate"
+                )}
               </Button>
             </div>
             <input
@@ -118,8 +130,16 @@ export function ContentEditor({ lesson, onUpdate }: ContentEditorProps) {
                 variant="ghost"
                 size="sm"
                 onClick={() => handleRegenerateSection("description")}
+                disabled={regeneratingSection === "description"}
               >
-                Regenerate
+                {regeneratingSection === "description" ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Regenerating...
+                  </>
+                ) : (
+                  "Regenerate"
+                )}
               </Button>
             </div>
             <textarea
@@ -138,8 +158,16 @@ export function ContentEditor({ lesson, onUpdate }: ContentEditorProps) {
                 variant="ghost"
                 size="sm"
                 onClick={() => handleRegenerateSection("learningOutcomes")}
+                disabled={regeneratingSection === "learningOutcomes"}
               >
-                Regenerate
+                {regeneratingSection === "learningOutcomes" ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Regenerating...
+                  </>
+                ) : (
+                  "Regenerate"
+                )}
               </Button>
             </div>
             <div className="space-y-2">
@@ -195,9 +223,18 @@ export function ContentEditor({ lesson, onUpdate }: ContentEditorProps) {
               <Button
                 variant="ghost"
                 size="sm"
+                className="cursor-pointer"
                 onClick={() => handleRegenerateSection("activities")}
+                disabled={regeneratingSection === "activities"}
               >
-                Regenerate
+                {regeneratingSection === "activities" ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Regenerating...
+                  </>
+                ) : (
+                  "Regenerate"
+                )}
               </Button>
             </div>
             <div className="grid gap-4 md:grid-cols-2">

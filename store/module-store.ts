@@ -26,7 +26,9 @@ interface ModuleState {
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
   updateSequence: (sequence: string[]) => void
-  updateMetadata: (moduleId: string, metadata: ModuleMetadata) => void
+  updateMetadata: (moduleId: string, metadata: ModuleMetadata) => void,
+  clearStore: () => void
+  
 }
 
 export const useModuleStore = create<ModuleState>()(
@@ -115,7 +117,9 @@ export const useModuleStore = create<ModuleState>()(
             m.id === moduleId ? { ...m, metadata } : m
           ),
         })),
+      clearStore: () => set({ modules: [], suggestedSequence: [] }),
     }),
+    
     {
       name: "module-storage",
     }

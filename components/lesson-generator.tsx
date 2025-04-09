@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { generateLesson } from "@/lib/openai"
 import { useLessonStore } from "@/store/lesson-store"
 import { Lesson } from "@/types/lesson"
 import { v4 as uuidv4 } from "uuid"
+import { Loader2 } from "lucide-react"
 
 interface LessonGeneratorProps {
   onLessonGenerated: (lesson: Lesson) => void
@@ -16,7 +17,6 @@ export function LessonGenerator({ onLessonGenerated }: LessonGeneratorProps) {
   const [context, setContext] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   
-  // Replace local state with store state
   const { 
     currentLesson, 
     setCurrentLesson, 
@@ -24,18 +24,18 @@ export function LessonGenerator({ onLessonGenerated }: LessonGeneratorProps) {
     setError 
   } = useLessonStore()
 
-  // Initialize form with stored lesson data if available
-  useEffect(() => {
-    if (currentLesson) {
+  // useEffect(() => {
+  //   if (currentLesson) {
 
-    }
-  }, [currentLesson])
+  //   }
+  // }, [currentLesson])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setLoading(true)
     setError(null)
+    setCurrentLesson(null)
 
     try {
       const generatedLesson = await generateLesson(topic, context)
@@ -107,7 +107,14 @@ export function LessonGenerator({ onLessonGenerated }: LessonGeneratorProps) {
         </div>
 
         <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Generating..." : "Generate Lesson"}
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Generating...
+            </>
+          ) : (
+            "Generate Lesson"
+          )}
         </Button>
       </form>
 
