@@ -12,6 +12,7 @@ CourseGPT is a modern web application built with Next.js that helps educators an
 
 - 🎓 AI-powered lesson generation
 - 📚 Module management system
+- 📊 Content Editing and Regeneration System
 - 🎨 Modern UI with Tailwind CSS and Shadcn UI
 - 📱 Responsive design
 - 🔒 Type-safe development with TypeScript
