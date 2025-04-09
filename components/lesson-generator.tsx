@@ -6,6 +6,7 @@ import { generateLesson } from "@/lib/openai"
 import { useLessonStore } from "@/store/lesson-store"
 import { Lesson } from "@/types/lesson"
 import { v4 as uuidv4 } from "uuid"
+import { useModuleStore } from "@/store/module-store"
 import { Loader2 } from "lucide-react"
 
 interface LessonGeneratorProps {
@@ -16,6 +17,7 @@ export function LessonGenerator({ onLessonGenerated }: LessonGeneratorProps) {
   const [topic, setTopic] = useState("")
   const [context, setContext] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const { clearStore } = useModuleStore();
   
   const { 
     currentLesson, 
@@ -24,11 +26,6 @@ export function LessonGenerator({ onLessonGenerated }: LessonGeneratorProps) {
     setError 
   } = useLessonStore()
 
-  // useEffect(() => {
-  //   if (currentLesson) {
-
-  //   }
-  // }, [currentLesson])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,7 +33,7 @@ export function LessonGenerator({ onLessonGenerated }: LessonGeneratorProps) {
     setLoading(true)
     setError(null)
     setCurrentLesson(null)
-
+    clearStore()
     try {
       const generatedLesson = await generateLesson(topic, context)
       

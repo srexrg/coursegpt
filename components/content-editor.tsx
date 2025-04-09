@@ -86,7 +86,7 @@ export function ContentEditor({ lesson, onUpdate }: ContentEditorProps) {
               <Button onClick={handleSave}>Save Changes</Button>
             </>
           ) : (
-            <Button onClick={() => setIsEditing(true)}>Edit Content</Button>
+            <Button className="cursor-pointer" onClick={() => setIsEditing(true)}>Edit Content</Button>
           )}
         </div>
       </div>

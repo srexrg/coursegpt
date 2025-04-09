@@ -2,13 +2,6 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { 
-  DragDropContext, 
-  Droppable, 
-  Draggable, 
-  DropResult,
-  DroppableProvided
-} from "react-beautiful-dnd";
 import { Module, ModuleMetadata, ModuleRelationship, DifficultyLevel } from "@/types/module";
 import { useModuleStore } from "@/store/module-store";
 import {
@@ -25,9 +18,6 @@ export function ModuleOrganizer() {
   const { 
     modules, 
     addModule, 
-    // updateModule,
-    moveLessonBetweenModules, 
-    reorderLessons,
     updateMetadata,
     suggestedSequence,
     updateSequence
@@ -65,7 +55,7 @@ export function ModuleOrganizer() {
     }) => {
       updateMetadata(moduleId, {
         ...metadata,
-        suggestedNext: [], // This will be updated by the AI
+        suggestedNext: [], 
       });
     };
   };
@@ -88,7 +78,6 @@ export function ModuleOrganizer() {
       const data = await response.json();
       updateSequence(data.suggestedOrder);
       
-      // Update module metadata with relationships
       data.relationships.forEach((rel: ModuleRelationship) => {
         updateMetadata(rel.moduleId, {
           prerequisites: rel.prerequisites,
@@ -104,37 +93,6 @@ export function ModuleOrganizer() {
     }
   };
 
-  const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
-
-    const { source, destination } = result;
-    const sourceModuleId = source.droppableId;
-    const destModuleId = destination.droppableId;
-
-    // If dragging within the same module
-    if (sourceModuleId === destModuleId) {
-      reorderLessons(
-        sourceModuleId,
-        source.index,
-        destination.index
-      );
-    } else {
-      // If dragging between different modules
-      const sourceModule = modules.find(m => m.id === sourceModuleId);
-      if (!sourceModule) return;
-      
-      const lesson = sourceModule.lessons[source.index];
-      if (!lesson) return;
-      
-      moveLessonBetweenModules(
-        sourceModuleId,
-        destModuleId,
-        lesson.id,
-        destination.index
-      );
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -142,6 +100,7 @@ export function ModuleOrganizer() {
         <Button
           onClick={generateSequenceSuggestions}
           disabled={isGeneratingSequence}
+          className="cursor-pointer"
         >
           {isGeneratingSequence
             ? "Generating..."
@@ -170,105 +129,79 @@ export function ModuleOrganizer() {
             />
           </div>
         </div>
-        <Button onClick={handleAddModule}>Add Module</Button>
+        <Button className="cursor-pointer" onClick={handleAddModule}>Add Module</Button>
       </div>
 
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="grid gap-6 md:grid-cols-2">
-          {modules.map((module) => (
-            <div key={module.id} className="rounded-lg border p-4 shadow-sm">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold">{module.title}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {module.description}
-                  </p>
-                </div>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      Edit Metadata
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Module Metadata</DialogTitle>
-                    </DialogHeader>
-                    <ModuleMetadataForm
-                      module={module}
-                      onUpdate={handleUpdateMetadata(module.id)}
-                      allModules={modules}
-                    />
-                  </DialogContent>
-                </Dialog>
+      <div className="grid gap-6 md:grid-cols-2">
+        {modules.map((module) => (
+          <div key={module.id} className="rounded-lg border p-4 shadow-sm">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-lg font-semibold">{module.title}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {module.description}
+                </p>
               </div>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    Edit Metadata
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Module Metadata</DialogTitle>
+                  </DialogHeader>
+                  <ModuleMetadataForm
+                    module={module}
+                    onUpdate={handleUpdateMetadata(module.id)}
+                    allModules={modules}
+                  />
+                </DialogContent>
+              </Dialog>
+            </div>
 
-              {module.metadata && (
-                <div className="mb-4 space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="font-medium">Difficulty:</span>
-                    <span className="capitalize">
-                      {module.metadata.difficulty}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="font-medium">Duration:</span>
-                    <span>{module.metadata.estimatedDuration} minutes</span>
-                  </div>
-                  {module.metadata.prerequisites.length > 0 && (
-                    <div className="text-sm">
-                      <span className="font-medium">Prerequisites:</span>
-                      <ul className="list-disc pl-5 mt-1">
-                        {module.metadata.prerequisites.map((prereqId) => {
-                          const prereqModule = modules.find(
-                            (m) => m.id === prereqId
-                          );
-                          return <li key={prereqId}>{prereqModule?.title}</li>;
-                        })}
-                      </ul>
-                    </div>
-                  )}
+            {module.metadata && (
+              <div className="mb-4 space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="font-medium">Difficulty:</span>
+                  <span className="capitalize">
+                    {module.metadata.difficulty}
+                  </span>
                 </div>
-              )}
-
-              <Droppable
-                droppableId={module.id}
-                isDropDisabled={false}
-                isCombineEnabled={true}
-                ignoreContainerClipping={true}
-              >
-                {(provided: DroppableProvided) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className="space-y-2"
-                  >
-                    {module.lessons.map((lesson, index) => (
-                      <Draggable
-                        key={lesson.id}
-                        draggableId={lesson.id}
-                        index={index}
-                      >
-                        {(provided) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            className="rounded-md border bg-card p-2 text-sm"
-                          >
-                            {lesson.title}
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="font-medium">Duration:</span>
+                  <span>{module.metadata.estimatedDuration} minutes</span>
+                </div>
+                {module.metadata.prerequisites.length > 0 && (
+                  <div className="text-sm">
+                    <span className="font-medium">Prerequisites:</span>
+                    <ul className="list-disc pl-5 mt-1">
+                      {module.metadata.prerequisites.map((prereqId) => {
+                        const prereqModule = modules.find(
+                          (m) => m.id === prereqId
+                        );
+                        return <li key={prereqId}>{prereqModule?.title}</li>;
+                      })}
+                    </ul>
                   </div>
                 )}
-              </Droppable>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              {module.lessons.map((lesson) => (
+                <div
+                  key={lesson.id}
+                  className="rounded-md border bg-card p-2 text-sm"
+                >
+                  {lesson.title}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </DragDropContext>
+          </div>
+        ))}
+      </div>
 
       {suggestedSequence.length > 0 && (
         <div className="mt-8">
